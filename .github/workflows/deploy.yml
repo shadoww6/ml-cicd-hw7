@@ -1,0 +1,24 @@
+name: Model Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+      - name: Health check after deploy
+        run: |
+          echo "Образ собран: ghcr.io/${{ github.repository }}:${{ github.sha }}"
+          echo "Для проверки выполните:"
+          echo "curl https://your-app/health"
+          echo "curl https://your-app/predict -d '{\"x\": [1,2,3]}'"
